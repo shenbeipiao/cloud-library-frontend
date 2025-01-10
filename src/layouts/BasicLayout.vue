@@ -23,14 +23,15 @@ import GlobalHeader from '@/components/GlobalHeader.vue'
 
 <style scoped>
 #basicLayout .header{
-  background: #efefef;
-  padding: 16px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  text-align: center;
+  padding-inline: 20px;
+  background: white;
+  color: unset;
+  margin-bottom: 1px;
 }
+
+#basicLayout .content{
+}
+
 #basicLayout .footer{
     background: #efefef;
     padding: 16px;
