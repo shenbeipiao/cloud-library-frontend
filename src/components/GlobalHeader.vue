@@ -47,7 +47,7 @@ import {
   ImportOutlined,
   TeamOutlined,
   PictureOutlined,
-  DownOutlined,
+  InboxOutlined,
   LogoutOutlined,
 } from '@ant-design/icons-vue'
 import { MenuProps, message } from 'ant-design-vue'
@@ -55,10 +55,8 @@ import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { userLoginUsingPost, userLogoutUsingPost } from '@/api/userController'
 
-const router = useRouter()
 const loginUserStore = useLoginUserStore()
-const current = ref<string[]>(['mail'])
-const items = ref<MenuProps['items']>([
+const originItems = ref<MenuProps['items']>([
   {
     key: '/',
     icon: () => h(HomeOutlined),
@@ -66,25 +64,50 @@ const items = ref<MenuProps['items']>([
     title: '主页',
   },
   {
-    key: '创建图片',
+    key: '/add_picture',
     icon: () => h(ImportOutlined),
     label: '创建图片',
     title: '创建图片',
   },
   {
-    key: '用户管理',
+    key: '/admin/userManage',
     icon: () => h(TeamOutlined),
     label: '用户管理',
     title: '用户管理',
   },
   {
-    key: '图片管理',
+    key: '/admin/pictureManage',
     icon: () => h(PictureOutlined),
     label: '图片管理',
     title: '图片管理',
   },
+  {
+    key: '/admin/spaceManage',
+    icon: () => h(InboxOutlined),
+    label: '空间管理',
+    title: '空间管理',
+  },
 ])
 
+// 根据权限过滤菜单项
+const filterMenus = (menus = [] as MenuProps['items']) => {
+  return menus.filter((menu) => {
+    // 管理员才能看到 /admin 开头的菜单
+    if (menu?.key?.startsWith('/admin')) {
+      const loginUser = loginUserStore.loginUser
+      if (!loginUser || loginUser.userRole !== 'admin') {
+        return false
+      }
+    }
+    return true
+  })
+}
+
+// 展示在菜单的路由数组
+const items = computed<MenuProps['items']>(() => filterMenus(originItems.value))
+
+const router = useRouter()
+const current = ref<string[]>()
 // 路由跳转
 const doMenuClick = ({ key }) => {
   router.push({
