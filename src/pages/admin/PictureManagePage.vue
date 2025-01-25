@@ -138,6 +138,7 @@ const searchParams = reactive<API.PictureQueryRequest>({
   sortOrder: 'descend',
 })
 
+
 // 获取数据
 const fetchData = async () => {
   const res = await listPictureByPageUsingPost({
@@ -178,6 +179,13 @@ const doTableChange = (page: any) => {
 const doSearch = () => {
   // 重置页码
   searchParams.current = 1
+  // 将输入的字符串包装为数组
+  const tagsArray = searchParams.tags ? [String(searchParams.tags)] : [];
+
+  // 更新 searchParams.tags 为数组
+  searchParams.tags = tagsArray;
+  console.log("数组",searchParams)
+
   fetchData()
 }
 
