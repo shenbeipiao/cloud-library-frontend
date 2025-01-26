@@ -16,6 +16,16 @@
       <a-form-item label="标签">
         <a-input v-model:value="searchParams.tags" placeholder="请输入标签" allow-clear />
       </a-form-item>
+      <a-form-item label="审核状态" name="reviewStatus">
+        <a-select
+          v-model:value="searchParams.reviewStatus"
+          :options="PIC_REVIEW_STATUS_OPTIONS"
+          placeholder="请输入审核状态"
+          style="min-width: 180px"
+          allow-clear
+        />
+      </a-form-item>
+
       <a-form-item>
         <a-button type="primary" html-type="submit">搜索</a-button>
       </a-form-item>
@@ -50,9 +60,30 @@
         <template v-if="column.dataIndex === 'editTime'">
           {{ dayjs(record.editTime).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
+        <!-- 审核信息 -->
+        <template v-if="column.dataIndex === 'reviewMessage'">
+          <div>审核状态：{{ PIC_REVIEW_STATUS_MAP[record.reviewStatus] }}</div>
+          <div>审核信息：{{ record.reviewMessage }}</div>
+          <div>审核人：{{ record.reviewerId }}</div>
+        </template>
+
         <template v-if="column.key === 'action'">
-          <a-space size="small">
+          <a-space size="small" wrap>
             <a-button type='primary' @click="doEditInfo(record.id)">编辑</a-button>
+            <a-button
+              v-if="record.reviewStatus !== PIC_REVIEW_STATUS_ENUM.PASS"
+              type="primary"
+              @click="handleReview(record, PIC_REVIEW_STATUS_ENUM.PASS)"
+            >
+              通过
+            </a-button>
+            <a-button
+              v-if="record.reviewStatus !== PIC_REVIEW_STATUS_ENUM.REJECT"
+              danger
+              @click="handleReview(record, PIC_REVIEW_STATUS_ENUM.REJECT)"
+            >
+              拒绝
+            </a-button>
             <a-button danger @click="doDelete(record.id)">删除</a-button>
           </a-space>
         </template>
@@ -65,8 +96,9 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { deleteUserUsingPost } from '@/api/userController.ts'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
-import { deletePictureUsingPost, listPictureByPageUsingPost } from '@/api/pictureController'
+import { deletePictureUsingPost, listPictureByPageUsingPost, reviewPictureUsingPost } from '@/api/pictureController'
 import router from '@/router'
+import { PIC_REVIEW_STATUS_MAP, PIC_REVIEW_STATUS_ENUM, PIC_REVIEW_STATUS_OPTIONS } from '@/constants/picture'
 
 const columns = [
   {
@@ -120,9 +152,15 @@ const columns = [
     align: 'center'
   },
   {
+    title: '审核信息',
+    dataIndex: 'reviewMessage',
+    width:160,
+    // align: 'center'
+  },
+  {
     title: '操作',
     key: 'action',
-    align: 'center'
+    // align: 'center'
   },
 ]
 
@@ -137,7 +175,6 @@ const searchParams = reactive<API.PictureQueryRequest>({
   sortField: 'createTime',
   sortOrder: 'descend',
 })
-
 
 // 获取数据
 const fetchData = async () => {
@@ -179,11 +216,13 @@ const doTableChange = (page: any) => {
 const doSearch = () => {
   // 重置页码
   searchParams.current = 1
+  console.log("搜索",searchParams.tags)
   // 将输入的字符串包装为数组
   const tagsArray = searchParams.tags ? [String(searchParams.tags)] : [];
 
   // 更新 searchParams.tags 为数组
   searchParams.tags = tagsArray;
+  console.log("搜索转换",searchParams.tags)
   console.log("数组",searchParams)
 
   fetchData()
@@ -216,11 +255,29 @@ const doDelete = async (id: string) => {
     message.error('删除失败')
   }
 }
+
+//审核操作
+const handleReview = async (record: API.Picture, reviewStatus: number) => {
+  const reviewMessage = reviewStatus === PIC_REVIEW_STATUS_ENUM.PASS ? '管理员操作通过' : '管理员操作拒绝'
+  const res = await reviewPictureUsingPost({
+    id: record.id,
+    reviewStatus,
+    reviewMessage,
+  })
+  if (res.data.code === 0) {
+    message.success('审核操作成功')
+    // 重新获取列表
+    fetchData()
+  } else {
+    message.error('审核操作失败，' + res.data.message)
+  }
+}
+
 </script>
 
 <style scoped>
 #pictureManagePage {
-  margin: 20px 6%;
+  margin: 20px 10px;
 }
 /*/deep/.ant-table-thead > tr > th, .ant-table-tbody > tr > td {*/
 /*  text-align: center;*/
