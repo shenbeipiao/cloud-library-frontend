@@ -53,7 +53,7 @@ import {
 import { MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
-import { userLoginUsingPost, userLogoutUsingPost } from '@/api/userController'
+import { userLogoutUsingPost } from '@/api/userController'
 
 const loginUserStore = useLoginUserStore()
 const originItems = ref<MenuProps['items']>([
